@@ -52,6 +52,9 @@ def main():
             raw_cmd = input(curDir + " > ")
             cmd = raw_cmd.split()
 
+            if (len(cmd) == 0):
+                cmd = "  "
+
             if (cmd[0] == "locs3cp"):
                 if(len(cmd) != 3):
                     print("Usage: locs3cp <full or relative pathname of local file> /<bucket name>/<full pathname of S3 object>")
@@ -112,6 +115,19 @@ def main():
                         print("\tPASSED: Folder was successfully created!")
                     else:
                         print("\tERROR: Failed to create folder.")
+
+            elif (cmd[0] == "delete_bucket"):
+                if (len(cmd) != 2):
+                    print("Usage: delete_bucket <bucket name>")
+                else:
+                    bucketName = cmd[1]
+                    print(bucketName)
+                    ret = s3f.delete_bucket(s3, bucketName)
+
+                    if (ret == True):
+                        print("\tPASSED: Bucket was successfully deleted!")
+                    else:
+                        print("\tERROR: Failed to delete bucket (Ensure bucket is Empty).")
 
             
             elif(cmd[0] == "cd"):

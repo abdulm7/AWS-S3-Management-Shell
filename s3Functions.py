@@ -59,3 +59,18 @@ def create_folder(s3, bucket, folder):
         return True
     except:
         return False
+
+def delete_obj(s3, bucket, obj):
+    try:
+        s3.Object(bucket, obj).delete()
+        return True
+    except:
+        return False
+
+def delete_bucket(s3, bucket):
+    try:
+        s3.delete_bucket(Bucket= bucket)
+        return True
+    except Exception as e:
+        print(e)
+        return False
