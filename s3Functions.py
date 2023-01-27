@@ -31,15 +31,22 @@ def bucket_list ( s3 ) :
         buckets.append(bucket["Name"])
     return buckets
 
-def upload_file (s3, cmd):
+def upload_file (s3, cmd, curDir):
 
     if(len(cmd) != 3):
         return "(Usage) locs3cp <full or relative pathname of local file> /<bucket name>/<full pathname of S3 object>"
     else:
         # call local to s3 copy
-        bucketName = cmd[2].split("/")[0]
+        if (cmd[2][0] == '/'):
+            bucketName = cmd[2].split("/")[1]
+            objName = cmd[2][len(bucketName)+1:]
+            objName = objName[1:]
+        else:
+            bucketName = curDir.split("/")[1]
+            objName = curDir[len(bucketName)+1:] + cmd[2]
+            objName = objName[1:]
         localPath = cmd[1]
-        objName = cmd[2][len(bucketName)+1:]
+
 
         try:
             s3.upload_file(localPath, bucketName, objName)
@@ -48,18 +55,25 @@ def upload_file (s3, cmd):
             return e
 
 
-def download_file( s3, cmd):
+def download_file( s3, cmd, curDir):
 
     if(len(cmd) != 3):
         return "(Usage) s3loccp /<bucket name>/<full pathname of S3 file> <full/relative pathname of the local file>"
     else:
         # call local to s3 copy
-        bucketName = cmd[1].split("/")[0]
+        if (cmd[1][0] == '/'):
+            bucketName = cmd[1].split("/")[1]
+            objName = cmd[1][len(bucketName)+1:]
+            objName = objName[1:]
+        else:
+            bucketName = curDir.split("/")[1]
+            objName = curDir[len(bucketName)+1:] + cmd[1]
+            objName = objName[1:]
+        
         localPath = cmd[2]
-        obj = cmd[1][len(bucketName)+1:]
 
         try:
-            s3.download_file(bucketName, obj, localPath)
+            s3.download_file(bucketName, objName, localPath)
             return True
         except Exception as e:
             return e
@@ -78,36 +92,68 @@ def create_bucket(s3, cmd):
         except Exception as e:
             return e
 
-def create_folder(s3, cmd):
+def create_folder(s3, cmd, curDir):
     if (len(cmd) != 2):
         return "(Usage #1) create_folder /<bucket name>/<full pathname for the folder>\n(Usage #2) create_folder <full or relative pathname for the folder>"
     else:
-        # *** CHECK FIRST NAME IS BUCKET, IF NOT CHECK IF FOLDER NAME (RELATIVE) *** #
-        # THIS IS TEMP, WILL NEED TO KEEP TRACK OF WHAT BUCKET I'M IN SOME HOW
-        # TRACK THROUGHOUT CHANGE LOCATION/CHANGE DIRECTORY
-        bucketName = cmd[1].split("/")[0]
-        path = cmd[1][len(bucketName)+1:]
+
+        if (cmd[1][0] == '/'):
+            bucketName = cmd[1].split("/")[1]
+            objName = cmd[1][len(bucketName)+1:]
+            objName = objName[1:]
+        else:
+            bucketName = curDir.split("/")[1]
+            objName = curDir[len(bucketName)+1:] + cmd[1]
+            objName = objName[1:]
 
         try:
-            s3.put_object(Bucket=bucketName, Key=(path+'/'))
+            s3.put_object(Bucket=bucketName, Key=(objName+'/'))
             return True
         except Exception as e:
             return e
 
 
-def delete_obj(s3, bucket, obj):
-    try:
-        s3.Object(bucket, obj).delete()
-        return True
-    except Exception as e:
-        return e
+def delete_obj(s3, s3_res, cmd, curDir):
+
+    if (len(cmd) != 2):
+        print("s3delete <full or indirect pathname of object>")
+    else:
+        if (cmd[1][0] == '/'):
+            bucketName = cmd[1].split("/")[1]
+            objName = cmd[1][len(bucketName)+1:]
+            objName = objName[1:]
+        else:
+            bucketName = curDir.split("/")[1]
+            objName = curDir[len(bucketName)+1:] + cmd[1]
+            objName = objName[1:]
+
+        if (objName[len(objName)-1] == '/'):
+            bucket = s3_res.Bucket(bucketName)
+            count = bucket.objects.filter(Prefix=objName)
+
+            print (len(list(count)))
+            if len(list(count)) > 1:
+                return "Folder is not empty"
+
+        try:
+            s3.delete_object(Bucket=bucketName, Key=objName)
+            return True
+        except Exception as e:
+            return e
 
 
 def delete_bucket(s3, cmd, curDir):
     if (len(cmd) != 2):
         return "(Usage) delete_bucket <bucket name>"
     else:
+
         bucketName = cmd[1]
+
+        if curDir != '/':
+            curBucket = curDir.split("/")[1]
+            if curBucket == bucketName:
+                return "You are currently in the bucket you're attempting to delete"
+
         try:
             s3.delete_bucket(Bucket= bucketName)
             return True
@@ -138,6 +184,9 @@ def change_location(s3, cmd, curDir):
                 else:
                     cmd[1] = cmd[1] + d + '/'
             
+            if (numBack > len(curDir.split('/'))):
+                curDir = '/'
+
             if (curDir != '/'):
                 newCurDir = curDir.split('/')
                 curDir = ""
@@ -149,8 +198,6 @@ def change_location(s3, cmd, curDir):
 
             if (cmd[1] == ""):
                 return {'ret': True, 'curDir': curDir}
-
-            print("THIS IS COMMAND: " + cmd[1])
 
 
         # check if bucket/full path

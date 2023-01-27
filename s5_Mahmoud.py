@@ -57,7 +57,7 @@ def main():
 
             if (cmd[0] == "locs3cp"):
 
-                ret = s3f.upload_file(s3, cmd)
+                ret = s3f.upload_file(s3, cmd, curDir)
 
                 if (ret == True):
                     print("\tPASSED: Local to S3 copy was successful!")
@@ -66,7 +66,7 @@ def main():
 
             elif (cmd[0] == "s3loccp"):
 
-                ret = s3f.download_file( s3, cmd)
+                ret = s3f.download_file( s3, cmd, curDir)
 
                 if (ret == True):
                     print("\tPASSED: S3 to Local copy was successful!")
@@ -84,7 +84,7 @@ def main():
 
             elif (cmd[0] == "create_folder"):
 
-                ret = s3f.create_folder(s3, cmd)
+                ret = s3f.create_folder(s3, cmd, curDir)
 
                 if (ret == True):
                     print("\tPASSED: Folder was successfully created!")
@@ -93,12 +93,30 @@ def main():
 
             elif (cmd[0] == "delete_bucket"):
 
-                ret = s3f.delete_bucket(s3, cmd)
+                ret = s3f.delete_bucket(s3, cmd, curDir)
 
                 if (ret == True):
                     print("\tPASSED: Bucket was successfully deleted!")
                 else:
                     print("\tERROR: " + str(ret) + ".")
+                
+            elif (cmd[0] == 's3delete'):
+
+                ret = s3f.delete_obj(s3, s3_res, cmd, curDir)
+
+                if (ret == True):
+                    print("\tPASSED: Object was successfully deleted!")
+                else:
+                    print("\tERROR: " + str(ret) + ".")
+
+
+            elif (cmd[0] == 'cwlocn'):
+                
+                if(len(cmd) > 1):
+                    print("\tERROR: (Usage) cwlocn")
+                else:
+                    print("\t" + curDir)
+                
 
             elif (cmd[0] == "chlocn"):
                 
