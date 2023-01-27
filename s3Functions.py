@@ -128,6 +128,31 @@ def change_location(s3, cmd, curDir):
         if (curDir == '/' and cmd[1][0] != '/'):
             cmd[1] = '/' + cmd[1]
 
+        if ((len(cmd[1]) > 1) and (".." in cmd[1])):
+            dests = cmd[1].split('/')
+            cmd[1] = ""
+            numBack = 0
+            for d in dests:
+                if d == "..":
+                    numBack +=1
+                else:
+                    cmd[1] = cmd[1] + d + '/'
+            
+            if (curDir != '/'):
+                newCurDir = curDir.split('/')
+                curDir = ""
+                for i in range(len(newCurDir)-numBack-1):
+                    curDir = curDir + newCurDir[i] + '/'
+
+            if(curDir == ""):
+                curDir = '/'
+
+            if (cmd[1] == ""):
+                return {'ret': True, 'curDir': curDir}
+
+            print("THIS IS COMMAND: " + cmd[1])
+
+
         # check if bucket/full path
         if cmd[1][0] == '/' and len(cmd[1]) > 1:
             bucketName = cmd[1].split("/")[1]

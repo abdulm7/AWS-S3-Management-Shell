@@ -109,7 +109,7 @@ def main():
                 if (ret['ret'] == True):
                     print("\tPASSED: Successfully changed location!")
                 elif(ret['ret'] == False):
-                    print("\tERROR: failed to change location.")
+                    print("\tYou have not changed directories.")
                 else:
                     print("\tERROR: " + ret['ret'])
 
