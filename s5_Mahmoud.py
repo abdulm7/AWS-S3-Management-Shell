@@ -15,7 +15,6 @@ import sys
 import pathlib
 import boto3
 import s3Functions as s3f
-#
 
 def main():
     #
@@ -26,6 +25,8 @@ def main():
     config.read("S5-S3.conf")
     aws_access_key_id = config["test-1"]["aws_access_key_id"]
     aws_secret_access_key = config["test-1"]["aws_secret_access_key"]
+
+    curDir = "/"
 
     try:
     #
@@ -45,91 +46,76 @@ def main():
 
         # initialize 
         raw_cmd = ""
-        curDir = "/"
 
         while raw_cmd.lower() != "quit" and raw_cmd.lower() != "exit":
             
-            raw_cmd = input(curDir + " > ")
+            raw_cmd = input( "S5 > ")
             cmd = raw_cmd.split()
 
             if (len(cmd) == 0):
                 cmd = "  "
 
             if (cmd[0] == "locs3cp"):
-                if(len(cmd) != 3):
-                    print("Usage: locs3cp <full or relative pathname of local file> /<bucket name>/<full pathname of S3 object>")
+
+                ret = s3f.upload_file(s3, cmd)
+
+                if (ret == True):
+                    print("\tPASSED: Local to S3 copy was successful!")
                 else:
-                    # call local to s3 copy
-                    bucketName = cmd[2].split("/")[0]
-                    localPath = cmd[1]
-                    objName = cmd[2][len(bucketName)+1:]
-
-                    ret = s3f.upload_file(s3, localPath, bucketName, objName)
-
-                    if (ret == True):
-                        print("\tPASSED: Local to S3 copy was successful!")
-                    else:
-                        print("\tERROR: Local to S3 copy was unsuccessful.")
+                    print("\tERROR: " + str(ret) + ".")
 
             elif (cmd[0] == "s3loccp"):
-                if(len(cmd) != 3):
-                    print("Usage: s3loccp /<bucket name>/<full pathname of S3 file> <full/relative pathname of the local file>")
+
+                ret = s3f.download_file( s3, cmd)
+
+                if (ret == True):
+                    print("\tPASSED: S3 to Local copy was successful!")
                 else:
-                    # call local to s3 copy
-                    bucketName = cmd[1].split("/")[0]
-                    localPath = cmd[2]
-                    obj = cmd[1][len(bucketName)+1:]
-
-                    ret = s3f.download_file( s3, localPath, bucketName, obj)
-
-                    if (ret == True):
-                        print("\tPASSED: S3 to Local copy was successful!")
-                    else:
-                        print("\tERROR: S3 to Local copy was unsuccessful.")
+                    print("\tERROR: " + str(ret) + ".")
 
             elif (cmd[0] == "create_bucket"):
-                if (len(cmd) != 2):
-                    print("Usage: create_bucket /<bucket name>")
-                else:
-                    name = cmd[1]
-                    ret = s3f.create_bucket(s3, name)
 
-                    if (ret == True):
-                        print("\tPASSED: Bucket was successfully created!")
-                    else:
-                        print("\tERROR: Failed to create bucket.")
+                ret = s3f.create_bucket(s3, cmd)
+
+                if (ret == True):
+                    print("\tPASSED: Bucket was successfully created!")
+                else:
+                    print("\tERROR: " + str(ret) + ".")
 
             elif (cmd[0] == "create_folder"):
-                if (len(cmd) != 2):
-                    print("Usage #1: create_folder /<bucket name>/<full pathname for the folder>\nUsage #2: create_folder <full or relative pathname for the folder>")
+
+                ret = s3f.create_folder(s3, cmd)
+
+                if (ret == True):
+                    print("\tPASSED: Folder was successfully created!")
                 else:
-                    # *** CHECK FIRST NAME IS BUCKET, IF NOT CHECK IF FOLDER NAME (RELATIVE) *** #
-                    # THIS IS TEMP, WILL NEED TO KEEP TRACK OF WHAT BUCKET I'M IN SOME HOW
-                    # TRACK THROUGHOUT CHANGE LOCATION/CHANGE DIRECTORY
-                    bucketName = cmd[1].split("/")[0]
-                    path = obj = cmd[1][len(bucketName)+1:]
-
-                    ret = s3f.create_folder(s3, bucketName, path)
-
-                    if (ret == True):
-                        print("\tPASSED: Folder was successfully created!")
-                    else:
-                        print("\tERROR: Failed to create folder.")
+                    print("\tERROR: " + str(ret) + ".")
 
             elif (cmd[0] == "delete_bucket"):
-                if (len(cmd) != 2):
-                    print("Usage: delete_bucket <bucket name>")
+
+                ret = s3f.delete_bucket(s3, cmd)
+
+                if (ret == True):
+                    print("\tPASSED: Bucket was successfully deleted!")
                 else:
-                    bucketName = cmd[1]
-                    print(bucketName)
-                    ret = s3f.delete_bucket(s3, bucketName)
+                    print("\tERROR: " + str(ret) + ".")
 
-                    if (ret == True):
-                        print("\tPASSED: Bucket was successfully deleted!")
-                    else:
-                        print("\tERROR: Failed to delete bucket (Ensure bucket is Empty).")
+            elif (cmd[0] == "chlocn"):
+                
+                print("Pre-change location: " + curDir)
 
-            
+                ret = s3f.change_location(s3, cmd, curDir)
+
+                if (ret['ret'] == True):
+                    print("\tPASSED: Successfully changed location!")
+                elif(ret['ret'] == False):
+                    print("\tERROR: failed to change location.")
+                else:
+                    print("\tERROR: " + ret['ret'])
+
+                curDir = ret['curDir']
+                print("Post-change location" + curDir)
+
             elif(cmd[0] == "cd"):
                 try:
                     os.chdir(cmd[1])
@@ -139,7 +125,7 @@ def main():
                 os.system(raw_cmd)
     
     except Exception as e:
-        print ( "cannot connect to s3: " + e)
+        print ( "cannot connect to s3: " + str(e))
 
 main()
 
