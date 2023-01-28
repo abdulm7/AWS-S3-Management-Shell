@@ -127,13 +127,30 @@ def delete_obj(s3, s3_res, cmd, curDir):
             objName = curDir[len(bucketName)+1:] + cmd[1]
             objName = objName[1:]
 
-        if (objName[len(objName)-1] == '/'):
-            bucket = s3_res.Bucket(bucketName)
-            count = bucket.objects.filter(Prefix=objName)
 
-            print (len(list(count)))
+        bs = bucket_list(s3)
+
+        if bucketName not in bs:
+            return "Invalid Bucket Name"
+
+        bucket = s3_res.Bucket(bucketName)
+        count = bucket.objects.filter(Prefix=objName)
+
+        print("BucketName: " + bucketName)
+        print("objName: " + objName)
+
+        if (len(list(count)) > 0 ):
+            if (list(count)[0].key != objName):
+                return objName + " not found"
+        else:
+            return objName + " not found"
+
+        # ensure object exists, then ensure object is a folder
+        if (objName[len(objName)-1] == '/'):
+            # greater than 1 because folder itself counts as 1
             if len(list(count)) > 1:
                 return "Folder is not empty"
+    
 
         try:
             s3.delete_object(Bucket=bucketName, Key=objName)
@@ -252,3 +269,7 @@ def change_location(s3, cmd, curDir):
                         return {'ret': True, 'curDir': curDir}
         
         return {'ret': False, 'curDir': curDir}
+
+
+def copy_objects():
+    return False
