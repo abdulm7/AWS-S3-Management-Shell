@@ -12,7 +12,8 @@
 #
 import boto3
 
-
+# Reference:
+# Dr. Deb Stacey's Function
 def list_buckets ( s3 ) :
     buckets = []
     response = s3.list_buckets()
@@ -25,6 +26,8 @@ def list_buckets ( s3 ) :
 
     return ret
 
+# Reference:
+# Dr. Deb Stacey's Function
 def bucket_list ( s3 ) :
     buckets = []
     response = s3.list_buckets()
@@ -32,12 +35,13 @@ def bucket_list ( s3 ) :
         buckets.append(bucket["Name"])
     return buckets
 
+# 
 def upload_file (s3, cmd, curDir):
-
+    # error check appropriate parameter length
     if(len(cmd) != 3):
         return "(Usage) locs3cp <full or relative pathname of local file> /<bucket name>/<full pathname of S3 object>"
     else:
-        # call local to s3 copy
+        # check relative or absolute path
         if (cmd[2][0] == '/'):
             bucketName = cmd[2].split("/")[1]
             objName = cmd[2][len(bucketName)+1:]
@@ -46,9 +50,10 @@ def upload_file (s3, cmd, curDir):
             bucketName = curDir.split("/")[1]
             objName = curDir[len(bucketName)+1:] + cmd[2]
             objName = objName[1:]
+        # storing local path
         localPath = cmd[1]
 
-
+        # exception handling with boto3 api call
         try:
             s3.upload_file(localPath, bucketName, objName)
             return True
@@ -57,11 +62,11 @@ def upload_file (s3, cmd, curDir):
 
 
 def download_file( s3, cmd, curDir):
-
+    # error check appropriate parameter length
     if(len(cmd) != 3):
         return "(Usage) s3loccp /<bucket name>/<full pathname of S3 file> <full/relative pathname of the local file>"
     else:
-        # call local to s3 copy
+        # check relative or absolute path
         if (cmd[1][0] == '/'):
             bucketName = cmd[1].split("/")[1]
             objName = cmd[1][len(bucketName)+1:]
@@ -70,9 +75,10 @@ def download_file( s3, cmd, curDir):
             bucketName = curDir.split("/")[1]
             objName = curDir[len(bucketName)+1:] + cmd[1]
             objName = objName[1:]
-        
+        # storing local path
         localPath = cmd[2]
 
+        # exception handling with boto3 api call
         try:
             s3.download_file(bucketName, objName, localPath)
             return True
@@ -80,13 +86,14 @@ def download_file( s3, cmd, curDir):
             return e
 
 
-    
-# REFERENCE: Dr. Deb Stacey 'createBucket.py'
 def create_bucket(s3, cmd):
+    # error check appropriate parameter length
     if (len(cmd) != 2):
         return "(Usage) create_bucket /<bucket name>"
     else:
+        # storing new bucket name
         name = cmd[1]
+        # exception handling with boto3 api call
         try:
             s3.create_bucket(Bucket=name, CreateBucketConfiguration={'LocationConstraint': 'ca-central-1'})
             return True
@@ -94,10 +101,11 @@ def create_bucket(s3, cmd):
             return e
 
 def create_folder(s3, cmd, curDir):
+    # error check appropriate parameter length
     if (len(cmd) != 2):
         return "(Usage #1) create_folder /<bucket name>/<full pathname for the folder>\n(Usage #2) create_folder <full or relative pathname for the folder>"
     else:
-
+        # check relative or absolute path
         if (cmd[1][0] == '/'):
             bucketName = cmd[1].split("/")[1]
             objName = cmd[1][len(bucketName)+1:]
@@ -107,6 +115,7 @@ def create_folder(s3, cmd, curDir):
             objName = curDir[len(bucketName)+1:] + cmd[1]
             objName = objName[1:]
 
+        # exception handling with boto3 api call
         try:
             s3.put_object(Bucket=bucketName, Key=(objName+'/'))
             return True
@@ -115,10 +124,11 @@ def create_folder(s3, cmd, curDir):
 
 
 def delete_obj(s3, s3_res, cmd, curDir):
-
+    # error check appropriate parameter length
     if (len(cmd) != 2):
         return ("s3delete <full or indirect pathname of object>")
     else:
+        # check relative or absolute path
         if (cmd[1][0] == '/'):
             bucketName = cmd[1].split("/")[1]
             objName = cmd[1][len(bucketName)+1:]
@@ -131,15 +141,15 @@ def delete_obj(s3, s3_res, cmd, curDir):
 
         bs = bucket_list(s3)
 
+        # error check bucket name exists
         if bucketName not in bs:
             return "Invalid Bucket Name"
 
+        # get bucket and objects in bucket
         bucket = s3_res.Bucket(bucketName)
         count = bucket.objects.filter(Prefix=objName)
 
-        # print("BucketName: " + bucketName)
-        # print("objName: " + objName)
-
+        # ensure object exists
         if (len(list(count)) > 0 ):
             if (list(count)[0].key != objName):
                 return objName + " not found"
@@ -152,7 +162,7 @@ def delete_obj(s3, s3_res, cmd, curDir):
             if len(list(count)) > 1:
                 return "Folder is not empty"
     
-
+        # exception handling with boto3 api call
         try:
             s3.delete_object(Bucket=bucketName, Key=objName)
             return True
@@ -161,17 +171,19 @@ def delete_obj(s3, s3_res, cmd, curDir):
 
 
 def delete_bucket(s3, cmd, curDir):
+    # error check appropriate parameter length
     if (len(cmd) != 2):
         return "(Usage) delete_bucket <bucket name>"
     else:
 
         bucketName = cmd[1]
 
+        # error check user is not trying to delete a bucket their are currently in
         if curDir != '/':
             curBucket = curDir.split("/")[1]
             if curBucket == bucketName:
                 return "You are currently in the bucket you're attempting to delete"
-
+        # exception handling with boto3 api call
         try:
             s3.delete_bucket(Bucket= bucketName)
             return True
@@ -179,6 +191,7 @@ def delete_bucket(s3, cmd, curDir):
             return e
 
 def change_location(s3, cmd, curDir):
+    # error check appropriate parameter length
     if (len(cmd) != 2):
         return {
             'ret':"""(Usage #1) chlocn /<bucket name>
@@ -192,15 +205,20 @@ def change_location(s3, cmd, curDir):
         if (curDir == '/' and cmd[1][0] != '/'):
             cmd[1] = '/' + cmd[1]
 
+        # check for backwards traverse
         if ((len(cmd[1]) > 1) and (".." in cmd[1])):
             dests = cmd[1].split('/')
             cmd[1] = ""
             numBack = 0
+            bucks = bucket_list(s3)
             for d in dests:
                 if d == "..":
                     numBack +=1
                 else:
-                    cmd[1] = cmd[1] + d + '/'
+                    if d in bucks:
+                        cmd[1] = '/' + cmd[1] + d + '/'
+                    else:
+                        cmd[1] = cmd[1] + d + '/'
             
             if (numBack > len(curDir.split('/'))):
                 curDir = '/'
@@ -273,7 +291,7 @@ def change_location(s3, cmd, curDir):
 
 
 def copy_objects(s3, s3_res, cmd, curDir):
-
+    # error check appropriate parameter length
     if (len(cmd) != 3):
         return ("s3copy <from S3 location of object> <to S3 location>")
     else:
@@ -311,12 +329,13 @@ def copy_objects(s3, s3_res, cmd, curDir):
 
 
 def list_all(s3, s3_res, cmd, curDir):
-
+    # error check appropriate parameter length
     if (len(cmd) != 2 and len(cmd) != 1 and len(cmd) != 3):
         return ("""(Usage #1) list -l
         (Usage #2) list /<bucket name>
         (Usage #3) list /<bucket name>/<full pathname for directory or file>""")
     else:
+        # checking all cases as well as exception handling all cases
         try:
             if(len(cmd) == 1):
                 
@@ -393,7 +412,7 @@ def list_all(s3, s3_res, cmd, curDir):
                     objName = objName[1:]
 
                 bucket = s3_res.Bucket(bucketName)
-
+                # formated print statements of information
                 if(objName == ""):
                     for b in bucket.objects.all():
                         print(f"{str(b.key):50s} \tLast Modified:  {str(b.last_modified):30s} \tSize: {str(b.size):20s}  \tOwner:  {str(b.owner):10s}")
