@@ -116,6 +116,16 @@ def main():
                     print("\tERROR: (Usage) cwlocn")
                 else:
                     print("\t" + curDir)
+
+            
+            elif (cmd[0] == 's3copy'):
+
+                ret = s3f.copy_objects(s3, s3_res, cmd, curDir)
+
+                if (ret == True):
+                    print("\tPASSED: Object was successfully copied!")
+                else:
+                    print("\tERROR: " + str(ret) + ".")
                 
 
             elif (cmd[0] == "chlocn"):

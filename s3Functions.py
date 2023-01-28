@@ -271,5 +271,50 @@ def change_location(s3, cmd, curDir):
         return {'ret': False, 'curDir': curDir}
 
 
-def copy_objects():
-    return False
+def copy_objects(s3, s3_res, cmd, curDir):
+
+    if (len(cmd) != 3):
+        print("s3copy <from S3 location of object> <to S3 location>")
+    else:
+        # parse bucket name and object path #1 (relative or absolute)
+        if (cmd[1][0] == '/'):
+            bname1 = cmd[1].split("/")[1]
+            obj1 = cmd[1][len(bname1)+1:]
+            obj1 = obj1[1:]
+        else:
+            bname1 = curDir.split("/")[1]
+            obj1 = curDir[len(bname1)+1:] + cmd[1]
+            obj1 = obj1[1:]
+
+        # parse bucket name and object path #2 (relative or absolute)
+        if (cmd[2][0] == '/'):
+            bname2 = cmd[2].split("/")[1]
+            obj2 = cmd[2][len(bname2)+1:]
+            obj2 = obj2[1:]
+        else:
+            bname2 = curDir.split("/")[1]
+            obj2 = curDir[len(bname2)+1:] + cmd[2]
+            obj2 = obj2[1:]
+
+        # bs = bucket_list(s3)
+
+        # if bname1 not in bs:
+        #     return "Invalid Source Bucket Name"
+        
+        # if bname2 not in bs:
+        #     return "Invalid destination Bucket Name"
+
+        copySrc = {
+            'Bucket': bname1,
+            'Key': obj1
+        }
+
+        print("B1: " + bname1 + "\tOBJ1: " + obj1)
+        print("B2: " + bname2 + "\tOBJ2: " + obj2)
+
+        try:
+            bucket = s3_res.Bucket(bname2)
+            bucket.copy(copySrc, obj2)
+            return True
+        except Exception as e:
+            return e
