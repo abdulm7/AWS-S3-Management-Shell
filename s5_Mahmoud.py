@@ -42,6 +42,9 @@ def main():
         s3 = session.client("s3")
         s3_res = session.resource("s3")
 
+        # will throw exception if connection is not real
+        s3f.bucket_list(s3)
+
         print ( "Welcome to S5 Shell" )
 
         # initialize 
@@ -55,7 +58,7 @@ def main():
             if (len(cmd) == 0):
                 cmd = "  "
 
-            if (cmd[0] == "locs3cp"):
+            if (cmd[0].lower() == "locs3cp"):
 
                 ret = s3f.upload_file(s3, cmd, curDir)
 
@@ -64,7 +67,7 @@ def main():
                 else:
                     print("\tERROR: " + str(ret) + ".")
 
-            elif (cmd[0] == "s3loccp"):
+            elif (cmd[0].lower() == "s3loccp"):
 
                 ret = s3f.download_file( s3, cmd, curDir)
 
@@ -73,7 +76,7 @@ def main():
                 else:
                     print("\tERROR: " + str(ret) + ".")
 
-            elif (cmd[0] == "create_bucket"):
+            elif (cmd[0].lower() == "create_bucket"):
 
                 ret = s3f.create_bucket(s3, cmd)
 
@@ -82,7 +85,7 @@ def main():
                 else:
                     print("\tERROR: " + str(ret) + ".")
 
-            elif (cmd[0] == "create_folder"):
+            elif (cmd[0].lower() == "create_folder"):
 
                 ret = s3f.create_folder(s3, cmd, curDir)
 
@@ -91,7 +94,7 @@ def main():
                 else:
                     print("\tERROR: " + str(ret) + ".")
 
-            elif (cmd[0] == "delete_bucket"):
+            elif (cmd[0].lower() == "delete_bucket"):
 
                 ret = s3f.delete_bucket(s3, cmd, curDir)
 
@@ -100,7 +103,7 @@ def main():
                 else:
                     print("\tERROR: " + str(ret) + ".")
                 
-            elif (cmd[0] == 's3delete'):
+            elif (cmd[0].lower() == 's3delete'):
 
                 ret = s3f.delete_obj(s3, s3_res, cmd, curDir)
 
@@ -110,7 +113,7 @@ def main():
                     print("\tERROR: " + str(ret) + ".")
 
 
-            elif (cmd[0] == 'cwlocn'):
+            elif (cmd[0].lower() == 'cwlocn'):
                 
                 if(len(cmd) > 1):
                     print("\tERROR: (Usage) cwlocn")
@@ -118,7 +121,7 @@ def main():
                     print("\t" + curDir)
 
             
-            elif (cmd[0] == 's3copy'):
+            elif (cmd[0].lower() == 's3copy'):
 
                 ret = s3f.copy_objects(s3, s3_res, cmd, curDir)
 
@@ -128,23 +131,23 @@ def main():
                     print("\tERROR: " + str(ret) + ".")
                 
 
-            elif (cmd[0] == "chlocn"):
-                
-                print("Pre-change location: " + curDir)
+            elif (cmd[0].lower() == "chlocn"):
 
                 ret = s3f.change_location(s3, cmd, curDir)
+                curDir = ret['curDir']
 
                 if (ret['ret'] == True):
-                    print("\tPASSED: Successfully changed location!")
+                    print("\tPASSED: Successful! Current Working Directory: " + curDir)
                 elif(ret['ret'] == False):
                     print("\tYou have not changed directories.")
                 else:
                     print("\tERROR: " + ret['ret'])
 
-                curDir = ret['curDir']
-                print("Post-change location" + curDir)
+            elif (cmd[0].lower() == "list"):
 
-            elif(cmd[0] == "cd"):
+                ret = s3f.list_all(s3, s3_res, cmd, curDir)
+
+            elif(cmd[0].lower() == "cd"):
                 try:
                     os.chdir(cmd[1])
                 except Exception as e:

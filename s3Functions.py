@@ -1,3 +1,10 @@
+# Abdul Mahmoud
+# 1093276
+# Jan 21, 2023
+# CIS*4010
+# Assignment #1
+# AWS Shell
+
 #!/usr/bin/env python3
 
 #
@@ -5,12 +12,6 @@
 #
 import boto3
 
-#
-#  List buckets
-#
-
-# # global variable to track users PWD
-# curDir = ""
 
 def list_buckets ( s3 ) :
     buckets = []
@@ -116,7 +117,7 @@ def create_folder(s3, cmd, curDir):
 def delete_obj(s3, s3_res, cmd, curDir):
 
     if (len(cmd) != 2):
-        print("s3delete <full or indirect pathname of object>")
+        return ("s3delete <full or indirect pathname of object>")
     else:
         if (cmd[1][0] == '/'):
             bucketName = cmd[1].split("/")[1]
@@ -136,8 +137,8 @@ def delete_obj(s3, s3_res, cmd, curDir):
         bucket = s3_res.Bucket(bucketName)
         count = bucket.objects.filter(Prefix=objName)
 
-        print("BucketName: " + bucketName)
-        print("objName: " + objName)
+        # print("BucketName: " + bucketName)
+        # print("objName: " + objName)
 
         if (len(list(count)) > 0 ):
             if (list(count)[0].key != objName):
@@ -274,7 +275,7 @@ def change_location(s3, cmd, curDir):
 def copy_objects(s3, s3_res, cmd, curDir):
 
     if (len(cmd) != 3):
-        print("s3copy <from S3 location of object> <to S3 location>")
+        return ("s3copy <from S3 location of object> <to S3 location>")
     else:
         # parse bucket name and object path #1 (relative or absolute)
         if (cmd[1][0] == '/'):
@@ -296,21 +297,10 @@ def copy_objects(s3, s3_res, cmd, curDir):
             obj2 = curDir[len(bname2)+1:] + cmd[2]
             obj2 = obj2[1:]
 
-        # bs = bucket_list(s3)
-
-        # if bname1 not in bs:
-        #     return "Invalid Source Bucket Name"
-        
-        # if bname2 not in bs:
-        #     return "Invalid destination Bucket Name"
-
         copySrc = {
             'Bucket': bname1,
             'Key': obj1
         }
-
-        print("B1: " + bname1 + "\tOBJ1: " + obj1)
-        print("B2: " + bname2 + "\tOBJ2: " + obj2)
 
         try:
             bucket = s3_res.Bucket(bname2)
@@ -318,3 +308,100 @@ def copy_objects(s3, s3_res, cmd, curDir):
             return True
         except Exception as e:
             return e
+
+
+def list_all(s3, s3_res, cmd, curDir):
+
+    if (len(cmd) != 2 and len(cmd) != 1 and len(cmd) != 3):
+        return ("""(Usage #1) list -l
+        (Usage #2) list /<bucket name>
+        (Usage #3) list /<bucket name>/<full pathname for directory or file>""")
+    else:
+        try:
+            if(len(cmd) == 1):
+                
+                if(curDir == '/'):
+                    list_buckets(s3)
+                else:
+                    bucketName = curDir.split("/")[1]
+                    objName = curDir[len(bucketName)+1:]
+                    objName = objName[1:]
+
+                    bucket = s3_res.Bucket(bucketName)
+
+                    if(objName == ""):
+                        for b in bucket.objects.all():
+                            print(b.key)
+                    else:
+                        for b in bucket.objects.filter(Prefix=objName):
+                            print(b.key)
+
+            elif (len(cmd) == 2 and cmd[1] != '-l'):
+
+                if (curDir == '/' and cmd[1][0] != '/'):
+                    cmd[1] = '/' + cmd[1]
+
+                if (cmd[1][0] == '/'):
+                    bucketName = cmd[1].split("/")[1]
+                    objName = cmd[1][len(bucketName)+1:]
+                    objName = objName[1:]
+
+                else:
+                    bucketName = curDir.split("/")[1]
+                    objName = curDir[len(bucketName)+1:] + cmd[1]
+                    objName = objName[1:]
+
+                bucket = s3_res.Bucket(bucketName)
+
+                if (objName == ""):
+                    for b in bucket.objects.all():
+                            print(b.key)
+                else:
+                    for b in bucket.objects.filter(Prefix=objName):
+                            print(b.key)
+
+            elif (len(cmd) == 2 and cmd[1] == '-l'):
+                
+                if(curDir == '/'):
+                    response = s3.list_buckets()
+                    for b in response['Buckets']:
+                        print(f"\t{str(b['Name']):25s} Date Created: {str(b['CreationDate'])}")
+                else:
+                    bucketName = curDir.split("/")[1]
+                    objName = curDir[len(bucketName)+1:]
+                    objName = objName[1:]
+
+                    bucket = s3_res.Bucket(bucketName)
+
+                    if(objName == ""):
+                        for b in bucket.objects.all():
+                            print(f"{str(b.key):50s} \tLast Modified:  {str(b.last_modified):30s} \tSize: {str(b.size):20s}  \tOwner:  {str(b.owner):10s}")
+                    else:
+                        for b in bucket.objects.filter(Prefix=objName):
+                            print(f"{str(b.key):50s} \tLast Modified:  {str(b.last_modified):30s} \tSize: {str(b.size):20s}:  \tOwner:  {str(b.owner):10s}")
+            
+            elif (len(cmd) == 3 and cmd[1] == '-l'):
+
+                # parse bucket name and object path #1 (relative or absolute)
+                if (cmd[2][0] == '/'):
+                    bucketName = cmd[2].split("/")[1]
+                    objName = cmd[2][len(bucketName)+1:]
+                    objName = objName[1:]
+                else:
+                    bucketName = curDir.split("/")[1]
+                    objName = curDir[len(bucketName)+1:] + cmd[2]
+                    objName = objName[1:]
+
+                bucket = s3_res.Bucket(bucketName)
+
+                if(objName == ""):
+                    for b in bucket.objects.all():
+                        print(f"{str(b.key):50s} \tLast Modified:  {str(b.last_modified):30s} \tSize: {str(b.size):20s}  \tOwner:  {str(b.owner):10s}")
+                else:
+                    for b in bucket.objects.filter(Prefix=objName):
+                        print(f"{str(b.key):50s} \tLast Modified:  {str(b.last_modified):30s} \tSize: {str(b.size):20s}:  \tOwner:  {str(b.owner):10s}")
+        except Exception as e:
+            return e
+
+
+
