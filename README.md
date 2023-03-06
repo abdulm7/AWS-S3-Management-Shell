@@ -1,4 +1,4 @@
-**How to run the S5 Shell**
+# **How to run the S5 Shell**
  - begin by install the required libraries by running the following command: 
     - "pip3 install -r requirements.txt"
  - ensure you have your "S5-S3.conf" file in the same directory as the "s5_main.py" and "s3Functions.py"
@@ -8,7 +8,7 @@
  - use "exit" or "quit" to stop the shell
 
 
-**Normal Behaviour of The Shell**
+# **Normal Behaviour of The Shell**
  - shell normally allows users to copy local files to their s3 buckets using absolute or relative paths
  - shell normally allows users to copy s3 objects to their local file system using abolsute or relative paths
  - shell normally allows users to create buckets in their s3 service
@@ -22,7 +22,7 @@
  - shell norally allows users to delete buckets, as long as the users current working directory is not the bucket or inside the bucket.
 
 
-**Limitations**
+# **Limitations**
 - absolute path must begin with a forward slash '/'
 - relative path must not begin with a forward slash '/'
     - these behaviours replicate bash & cmd
