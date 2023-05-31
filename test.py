@@ -19,8 +19,8 @@ try:
 #  Establish an AWS session
 #
     session = boto3.Session(
-        aws_access_key_id="AKIAZE3PSARQHI5C7KNX",
-        aws_secret_access_key="AgwwbWaeg+WVx2WOFCwfs3tb3hyLVVMKfgKcK1iS"
+        aws_access_key_id="YOUR_ACCESS_KEY",
+        aws_secret_access_key="YOUR_SECRET_ACCESS_KEY"
     )
 #
 #  Set up client and resources
